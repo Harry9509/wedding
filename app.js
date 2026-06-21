@@ -140,6 +140,7 @@ document.addEventListener("DOMContentLoaded", function() {
         initAccordion();
         initGuestbook();
         initRsvp();
+        initRsvpModal();
         initEditor();
         initProtection();
     });
@@ -738,6 +739,8 @@ function initRsvp() {
             statusEl.style.color = '#2e7d32';
             form.reset();
             countRow.style.display = '';
+            // 전달 완료 후 배너를 잠시 뒤 자동으로 닫음
+            setTimeout(closeRsvpModal, 1200);
         } catch (err) {
             statusEl.textContent = '전달 중 오류가 발생했습니다. 다시 시도해주세요.';
             statusEl.style.color = '#c0392b';
@@ -746,6 +749,53 @@ function initRsvp() {
             submitBtn.textContent = '참석 정보 전달하기';
         }
     });
+}
+
+// 9-3. RSVP 배너(팝업) 제어
+function openRsvpModal() {
+    const modal = document.getElementById('rsvp-modal');
+    if (!modal) return;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRsvpModal() {
+    const modal = document.getElementById('rsvp-modal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    // 같은 방문(세션) 동안에는 자동으로 다시 띄우지 않음
+    try { sessionStorage.setItem('rsvp_banner_dismissed', '1'); } catch (e) {}
+}
+
+function initRsvpModal() {
+    const modal = document.getElementById('rsvp-modal');
+    if (!modal) return;
+
+    const backdrop = document.getElementById('rsvp-modal-backdrop');
+    const closeBtn = document.getElementById('rsvp-modal-close');
+    const openBtn = document.getElementById('rsvp-open-btn');
+
+    // 닫기: X 버튼 / 배경 클릭
+    if (closeBtn) closeBtn.addEventListener('click', closeRsvpModal);
+    if (backdrop) backdrop.addEventListener('click', closeRsvpModal);
+
+    // ESC 키로 닫기
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeRsvpModal();
+        }
+    });
+
+    // 본문의 '참석 여부 작성하기' 버튼으로 다시 열기
+    if (openBtn) openBtn.addEventListener('click', openRsvpModal);
+
+    // 첫 방문 시 자동으로 배너 표시 (같은 세션에서 이미 닫았다면 생략)
+    let dismissed = false;
+    try { dismissed = sessionStorage.getItem('rsvp_banner_dismissed') === '1'; } catch (e) {}
+    if (!dismissed) {
+        setTimeout(openRsvpModal, 700);
+    }
 }
 
 // 10. Editor Panel Customization
